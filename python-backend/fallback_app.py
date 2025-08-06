@@ -7,6 +7,7 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 import os
 from simple_scraper import scrape_remoteok_jobs, generate_mock_jobs
+from indeed_scraper import scrape_indeed_jobs
 
 app = Flask(__name__)
 CORS(app)
@@ -23,23 +24,44 @@ def search_jobs():
         
         jobs = []
         
-        # Try RemoteOK first for remote jobs
-        if location in ['remote', 'both']:
-            remote_jobs = scrape_remoteok_jobs(search_term, results_wanted // 2)
-            jobs.extend(remote_jobs)
-            print(f"Found {len(remote_jobs)} RemoteOK jobs")
+        # Try multiple real job sources
+        print("Fetching jobs from multiple sources...")
         
-        # Fill remaining with mock data
-        remaining = results_wanted - len(jobs)
-        if remaining > 0:
+        # 1. Try Indeed RSS feeds first (most reliable)
+        indeed_jobs = scrape_indeed_jobs(search_term, location, results_wanted // 2)
+        jobs.extend(indeed_jobs)
+        print(f"Found {len(indeed_jobs)} Indeed jobs")
+        
+        # 2. Try RemoteOK for remote jobs
+        if len(jobs) < results_wanted:
+            remaining = results_wanted - len(jobs)
+            remoteok_jobs = scrape_remoteok_jobs(search_term, remaining)
+            jobs.extend(remoteok_jobs)
+            print(f"Found {len(remoteok_jobs)} RemoteOK jobs")
+        
+        # 3. Fill remaining with high-quality mock data if needed
+        if len(jobs) < results_wanted:
+            remaining = results_wanted - len(jobs)
             mock_jobs = generate_mock_jobs(search_term, location, remaining)
             jobs.extend(mock_jobs)
-            print(f"Added {len(mock_jobs)} mock jobs")
+            print(f"Added {len(mock_jobs)} smart mock jobs")
         
+        # Sort all jobs by relevance score
+        jobs.sort(key=lambda x: x.get('relevanceScore', 0), reverse=True)
+        
+        real_jobs = len([j for j in jobs if j.get('source') in ['Indeed', 'RemoteOK']])
+        mock_jobs = len(jobs) - real_jobs
+        
+        message_parts = []
+        if real_jobs > 0:
+            message_parts.append(f"{real_jobs} real jobs")
+        if mock_jobs > 0:
+            message_parts.append(f"{mock_jobs} demo jobs")
+            
         return jsonify({
             "jobs": jobs[:results_wanted],
             "total": len(jobs),
-            "message": f"Found {len(jobs)} jobs using fallback scraper"
+            "message": f"Found {' + '.join(message_parts)} from multiple sources"
         })
         
     except Exception as e:

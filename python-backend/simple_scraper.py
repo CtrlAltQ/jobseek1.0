@@ -14,28 +14,46 @@ def scrape_remoteok_jobs(search_term="developer", limit=20):
     """Scrape jobs from RemoteOK (they have a public API)"""
     try:
         # RemoteOK has a simple JSON API
-        url = f"https://remoteok.io/api"
+        url = f"https://remoteok.com/api"
         headers = {
-            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+            'User-Agent': 'JobSeek/1.0 (https://jobseek1-0.vercel.app)',
+            'Accept': 'application/json',
         }
         
-        response = requests.get(url, headers=headers, timeout=10)
+        print(f"Fetching from RemoteOK: {url}")
+        response = requests.get(url, headers=headers, timeout=15)
+        print(f"RemoteOK response status: {response.status_code}")
+        
         if response.status_code != 200:
+            print(f"RemoteOK API error: {response.status_code}")
             return []
         
         data = response.json()
-        jobs = []
+        print(f"RemoteOK returned {len(data)} total items")
         
-        for job_data in data[1:limit+1]:  # Skip first item (metadata)
+        if not data or len(data) <= 1:
+            print("No job data from RemoteOK")
+            return []
+        
+        jobs = []
+        search_terms = [search_term.lower(), 'react', 'javascript', 'frontend', 'developer']
+        
+        for job_data in data[1:]:  # Skip first item (metadata)
             if not isinstance(job_data, dict):
                 continue
-                
-            # Filter by search term
-            title = job_data.get('position', '').lower()
-            description = job_data.get('description', '').lower()
-            tags = ' '.join(job_data.get('tags', [])).lower()
             
-            if search_term.lower() not in (title + ' ' + description + ' ' + tags):
+            if len(jobs) >= limit:
+                break
+                
+            # More flexible search matching
+            title = str(job_data.get('position', '')).lower()
+            description = str(job_data.get('description', '')).lower()
+            tags = ' '.join(str(tag) for tag in job_data.get('tags', [])).lower()
+            company = str(job_data.get('company', '')).lower()
+            
+            # Check if any search term matches
+            job_text = f"{title} {description} {tags} {company}"
+            if not any(term in job_text for term in search_terms):
                 continue
             
             # Convert to our format
