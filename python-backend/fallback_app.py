@@ -6,9 +6,52 @@ Uses simple scraping instead of JobSpy
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import os
-from simple_scraper import scrape_remoteok_jobs, generate_mock_jobs
-from indeed_scraper import scrape_indeed_jobs
-from linkedin_scraper import scrape_linkedin_jobs
+import traceback
+
+# Import with error handling
+try:
+    from simple_scraper import scrape_remoteok_jobs, generate_mock_jobs
+    print("✅ simple_scraper imported successfully")
+except Exception as e:
+    print(f"❌ Error importing simple_scraper: {e}")
+    def scrape_remoteok_jobs(*args, **kwargs): return []
+    def generate_mock_jobs(search_term="developer", location="Nashville", limit=20):
+        import uuid
+        from datetime import datetime, timedelta
+        import random
+        jobs = []
+        for i in range(limit):
+            jobs.append({
+                "id": str(uuid.uuid4()),
+                "title": f"{search_term.title()} Engineer",
+                "company": f"TechCorp {i+1}",
+                "location": location,
+                "salary": "$80,000 - $120,000",
+                "postedDate": (datetime.now() - timedelta(days=random.randint(1, 7))).isoformat(),
+                "source": "Mock API",
+                "description": f"Great {search_term} opportunity",
+                "requirements": ["React", "JavaScript", "Python"],
+                "isRemote": True,
+                "relevanceScore": 85,
+                "applicationStatus": "not_applied",
+                "tags": ["Remote", "Full-Time"],
+                "url": "#"
+            })
+        return jobs
+
+try:
+    from indeed_scraper import scrape_indeed_jobs
+    print("✅ indeed_scraper imported successfully")
+except Exception as e:
+    print(f"❌ Error importing indeed_scraper: {e}")
+    def scrape_indeed_jobs(*args, **kwargs): return []
+
+try:
+    from linkedin_scraper import scrape_linkedin_jobs
+    print("✅ linkedin_scraper imported successfully") 
+except Exception as e:
+    print(f"❌ Error importing linkedin_scraper: {e}")
+    def scrape_linkedin_jobs(*args, **kwargs): return []
 
 app = Flask(__name__)
 CORS(app)
@@ -25,34 +68,43 @@ def search_jobs():
         
         jobs = []
         
-        # Try multiple real job sources
+        # Try multiple real job sources with error handling
         print("Fetching jobs from multiple sources...")
         
         # 1. Try Indeed RSS feeds first (most reliable)
-        indeed_jobs = scrape_indeed_jobs(search_term, location, results_wanted // 3)
-        jobs.extend(indeed_jobs)
-        print(f"Found {len(indeed_jobs)} Indeed jobs")
+        try:
+            indeed_jobs = scrape_indeed_jobs(search_term, location, results_wanted // 3)
+            jobs.extend(indeed_jobs)
+            print(f"Found {len(indeed_jobs)} Indeed jobs")
+        except Exception as e:
+            print(f"Indeed scraping failed: {e}")
         
         # 2. Try LinkedIn jobs (professional network)
         if len(jobs) < results_wanted:
-            remaining = results_wanted - len(jobs)
-            linkedin_jobs = scrape_linkedin_jobs(search_term, location, min(remaining, results_wanted // 3))
-            jobs.extend(linkedin_jobs)
-            print(f"Found {len(linkedin_jobs)} LinkedIn jobs")
+            try:
+                remaining = results_wanted - len(jobs)
+                linkedin_jobs = scrape_linkedin_jobs(search_term, location, min(remaining, results_wanted // 3))
+                jobs.extend(linkedin_jobs)
+                print(f"Found {len(linkedin_jobs)} LinkedIn jobs")
+            except Exception as e:
+                print(f"LinkedIn scraping failed: {e}")
         
         # 3. Try RemoteOK for remote jobs
         if len(jobs) < results_wanted:
-            remaining = results_wanted - len(jobs)
-            remoteok_jobs = scrape_remoteok_jobs(search_term, remaining)
-            jobs.extend(remoteok_jobs)
-            print(f"Found {len(remoteok_jobs)} RemoteOK jobs")
+            try:
+                remaining = results_wanted - len(jobs)
+                remoteok_jobs = scrape_remoteok_jobs(search_term, remaining)
+                jobs.extend(remoteok_jobs)
+                print(f"Found {len(remoteok_jobs)} RemoteOK jobs")
+            except Exception as e:
+                print(f"RemoteOK scraping failed: {e}")
         
-        # 3. Fill remaining with high-quality mock data if needed
+        # 4. Always ensure we have some jobs - fill with mock data
         if len(jobs) < results_wanted:
             remaining = results_wanted - len(jobs)
             mock_jobs = generate_mock_jobs(search_term, location, remaining)
             jobs.extend(mock_jobs)
-            print(f"Added {len(mock_jobs)} smart mock jobs")
+            print(f"Added {len(mock_jobs)} mock jobs to fill quota")
         
         # Sort all jobs by relevance score
         jobs.sort(key=lambda x: x.get('relevanceScore', 0), reverse=True)
