@@ -8,6 +8,7 @@ from flask_cors import CORS
 import os
 from simple_scraper import scrape_remoteok_jobs, generate_mock_jobs
 from indeed_scraper import scrape_indeed_jobs
+from linkedin_scraper import scrape_linkedin_jobs
 
 app = Flask(__name__)
 CORS(app)
@@ -28,11 +29,18 @@ def search_jobs():
         print("Fetching jobs from multiple sources...")
         
         # 1. Try Indeed RSS feeds first (most reliable)
-        indeed_jobs = scrape_indeed_jobs(search_term, location, results_wanted // 2)
+        indeed_jobs = scrape_indeed_jobs(search_term, location, results_wanted // 3)
         jobs.extend(indeed_jobs)
         print(f"Found {len(indeed_jobs)} Indeed jobs")
         
-        # 2. Try RemoteOK for remote jobs
+        # 2. Try LinkedIn jobs (professional network)
+        if len(jobs) < results_wanted:
+            remaining = results_wanted - len(jobs)
+            linkedin_jobs = scrape_linkedin_jobs(search_term, location, min(remaining, results_wanted // 3))
+            jobs.extend(linkedin_jobs)
+            print(f"Found {len(linkedin_jobs)} LinkedIn jobs")
+        
+        # 3. Try RemoteOK for remote jobs
         if len(jobs) < results_wanted:
             remaining = results_wanted - len(jobs)
             remoteok_jobs = scrape_remoteok_jobs(search_term, remaining)
@@ -49,7 +57,7 @@ def search_jobs():
         # Sort all jobs by relevance score
         jobs.sort(key=lambda x: x.get('relevanceScore', 0), reverse=True)
         
-        real_jobs = len([j for j in jobs if j.get('source') in ['Indeed', 'RemoteOK']])
+        real_jobs = len([j for j in jobs if j.get('source') in ['Indeed', 'RemoteOK', 'LinkedIn']])
         mock_jobs = len(jobs) - real_jobs
         
         message_parts = []
