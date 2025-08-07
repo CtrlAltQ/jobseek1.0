@@ -154,8 +154,9 @@ export default function JobCard({ job, onStatusChange, onViewDetails }: JobCardP
             rel="noopener noreferrer"
             onClick={(e) => e.stopPropagation()}
             className="px-3 py-1 bg-gray-600 hover:bg-gray-500 hover:scale-105 active:scale-95 text-gray-200 text-xs font-medium rounded transition-all duration-200 transform hover:shadow-md"
+            title="Search for this job on Indeed (original job links often expire)"
           >
-            External Link
+            Search Job
           </a>
         </div>
       </div>

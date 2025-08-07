@@ -151,6 +151,21 @@ export default function JobDetail({ job, onClose, onStatusChange }: JobDetailPro
             </div>
           </div>
 
+          {/* Job Search Note */}
+          <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4">
+            <div className="flex items-start gap-3">
+              <svg className="w-5 h-5 text-blue-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <div>
+                <h4 className="text-sm font-medium text-blue-300 mb-1">About External Links</h4>
+                <p className="text-sm text-blue-200">
+                  Original job posting links often expire quickly. Our "Search on Job Board" button will search for this specific position and company on Indeed, giving you the best chance to find the current listing.
+                </p>
+              </div>
+            </div>
+          </div>
+
           {/* Status and Actions */}
           <div className="bg-gray-700/30 p-4 rounded-lg">
             <div className="flex items-center justify-between">
@@ -187,10 +202,11 @@ export default function JobDetail({ job, onClose, onStatusChange }: JobDetailPro
                   target="_blank"
                   rel="noopener noreferrer"
                   className="px-6 py-2 bg-blue-500 hover:bg-blue-600 text-white font-medium rounded transition-colors inline-flex items-center gap-2"
+                  title="Search for this job on Indeed (original posting links often expire)"
                 >
-                  View Original Posting
+                  Search on Job Board
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                   </svg>
                 </a>
               </div>

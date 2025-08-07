@@ -71,7 +71,7 @@ def scrape_remoteok_jobs(search_term="developer", limit=20):
                 "relevanceScore": calculate_relevance_simple(job_data, search_term),
                 "applicationStatus": "not_applied",
                 "tags": ["Remote"] + job_data.get('tags', [])[:5],
-                "url": job_data.get('url', '#')
+                "url": create_search_url(job_data)
             }
             jobs.append(job)
             
@@ -146,6 +146,20 @@ def format_date_remoteok(timestamp):
         except:
             pass
     return datetime.now().isoformat()
+
+def create_search_url(job_data):
+    """Create a search URL since direct job URLs often expire"""
+    company = job_data.get('company', '').strip()
+    position = job_data.get('position', '').strip()
+    
+    # Create search query with company and position
+    search_query = f"{position} {company}".strip()
+    if search_query:
+        # Use Indeed as it's most reliable for job searches
+        encoded_query = search_query.replace(' ', '+')
+        return f"https://www.indeed.com/jobs?q={encoded_query}&l=remote"
+    else:
+        return "https://remoteok.com/remote-jobs"
 
 def calculate_relevance_simple(job_data, search_term):
     """Simple relevance calculation"""
