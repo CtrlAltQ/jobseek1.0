@@ -41,4 +41,4 @@ server.log
 *.swo
 
 # OS
-Thumbs.db
+Thumbs.dbpython-backend/venv/
