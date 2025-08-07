@@ -31,7 +31,10 @@ export default function JobCard({ job, onStatusChange, onViewDetails }: JobCardP
   };
 
   return (
-    <div className="bg-gray-800 border border-gray-700 rounded-lg p-6 hover:border-gray-600 hover:shadow-lg hover:shadow-gray-900/50 transition-all duration-300 group hover:-translate-y-1 cursor-pointer">
+    <div 
+      onClick={() => onViewDetails(job)}
+      className="bg-gray-800 border border-gray-700 rounded-lg p-6 hover:border-gray-600 hover:shadow-lg hover:shadow-gray-900/50 transition-all duration-300 group hover:-translate-y-1 cursor-pointer"
+    >
       <div className="flex justify-between items-start mb-4">
         <div className="flex-1">
           <div className="flex items-center gap-3 mb-2">

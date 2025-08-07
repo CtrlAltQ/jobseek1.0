@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect } from 'react';
 import { Job } from '@/types/job';
 import { getRelevanceColor, getRelevanceLabel } from '@/lib/jobUtils';
 
@@ -10,6 +11,19 @@ interface JobDetailProps {
 }
 
 export default function JobDetail({ job, onClose, onStatusChange }: JobDetailProps) {
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+
+    if (job) {
+      document.addEventListener('keydown', handleEscape);
+      return () => document.removeEventListener('keydown', handleEscape);
+    }
+  }, [job, onClose]);
+
   if (!job) return null;
 
   const getStatusColor = (status: Job['applicationStatus']) => {
@@ -22,8 +36,14 @@ export default function JobDetail({ job, onClose, onStatusChange }: JobDetailPro
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-      <div className="bg-gray-800 border border-gray-700 rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+    <div 
+      className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50"
+      onClick={onClose}
+    >
+      <div 
+        className="bg-gray-800 border border-gray-700 rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-700">
           <div className="flex items-center gap-4">
